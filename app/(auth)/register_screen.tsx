@@ -1,0 +1,190 @@
+import BackBtn from "@/components/back_btn_component";
+import MyBtn from "@/components/btn_component";
+import MyInput from "@/components/input_component";
+import MyTxt from "@/components/txt_conponents";
+import { colors } from "@/constants/theme";
+import { useAuth } from "@/context/auth_context";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useRef, useState } from "react";
+import {
+  Alert,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+
+const RegisterScreen = () => {
+  const nameRef = useRef("");
+  const emailRef = useRef("");
+  const passRef = useRef("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { signUp } = useAuth();
+
+  const onsubmit = async () => {
+    if (
+      !nameRef.current.trim() ||
+      !emailRef.current.trim() ||
+      !passRef.current.trim()
+    ) {
+      Alert.alert("Sign Up", "Please fill all the feilds");
+      return;
+    }
+    try {
+      setLoading(true);
+      await signUp(emailRef.current, nameRef.current, passRef.current);
+    } catch (error: any) {
+      console.log("Resgitration error", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "android" ? "height" : "padding"}
+    >
+      <ImageBackground
+        style={{ flex: 1 }}
+        source={require("../../assets/images/bgPattern.png")}
+      >
+        {/* HEADER */}
+        <View style={styles.header}>
+          <BackBtn />
+          <MyTxt color={colors.white}>Need some help?</MyTxt>
+        </View>
+
+        {/* CONTENT */}
+        <View style={styles.content}>
+          <ScrollView
+            contentContainerStyle={styles.form}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ gap: 10, marginBottom: 15 }}>
+              <MyTxt
+                fontWeight={"600"}
+                fontSize={28}
+                color={colors.black}
+                lineHeight={25}
+              >
+                Get Started
+              </MyTxt>
+              <MyTxt fontSize={16} color={colors.neutral600}>
+                Create an account to continue
+              </MyTxt>
+              {/* ! name field */}
+              <MyInput
+                leftIcon={
+                  <Ionicons
+                    name="person-outline"
+                    size={20}
+                    color={colors.neutral500}
+                  />
+                }
+                keyboardType="name-phone-pad"
+                onChangeText={(value: string) => {
+                  nameRef.current = value;
+                }}
+                placeholder="Enter your name"
+              />
+              {/* ! email field */}
+              <MyInput
+                leftIcon={
+                  <Ionicons name="at" size={20} color={colors.neutral500} />
+                }
+                keyboardType="email-address"
+                onChangeText={(value: string) => {
+                  emailRef.current = value;
+                }}
+                placeholder="Enter your emial"
+              />
+              {/* ! password field */}
+              <MyInput
+                placeholder="Password"
+                onChangeText={(value: string) => {
+                  passRef.current = value;
+                }}
+                secureTextEntry={!showPassword}
+                rightIcon={
+                  <Ionicons
+                    name={showPassword ? "eye" : "eye-off"}
+                    size={20}
+                    color={colors.neutral500}
+                    onPress={() => setShowPassword((prev) => !prev)}
+                  />
+                }
+                leftIcon={
+                  <Ionicons
+                    name={"lock-closed-outline"}
+                    size={20}
+                    color={colors.neutral500}
+                  />
+                }
+              />
+              <View style={{ marginTop: 25, marginBottom: 10 }}>
+                <MyBtn title="Sign Up" loading={loading} onPress={onsubmit} />
+              </View>
+              <View style={styles.footer}>
+                <Pressable onPress={() => router.push("/(auth)/login_screen")}>
+                  <MyTxt fontWeight={"500"}>
+                    Already have an account?{"  "}
+                    <MyTxt
+                      color={colors.primary}
+                      fontWeight={"800"}
+                      fontSize={15}
+                    >
+                      Sign In
+                    </MyTxt>
+                  </MyTxt>
+                </Pressable>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </ImageBackground>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default RegisterScreen;
+
+const styles = StyleSheet.create({
+  conatiner: {
+    flex: 1,
+    // justifyContent: "flex-start",
+    // backgroundColor: colors.neutral900,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 25,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    borderCurve: "continuous",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    marginTop: 20,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 5,
+  },
+  form: {
+    gap: 15,
+    marginTop: 20,
+  },
+});

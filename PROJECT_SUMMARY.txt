@@ -1,0 +1,64 @@
+PROJECT: Chattrix - React Native Chat Application
+
+--------------------------------------
+SCREENS (app/)
+--------------------------------------
+
+1. (tabs)/index.tsx (Home)
+   - Main home screen after login
+   - Displays current user's name
+   - Tabs of Message and Groups
+
+2. Chat(Message and Groups)
+   - Header
+   - Body(with msg bubbles)
+   - Input with send button
+
+3. Profile
+   - User profile image
+   - User Data Fields
+
+4. Add User Modal
+
+5. Create Groups and add user Modal
+
+
+--------------------------------------
+COMPONENTS (components/)
+--------------------------------------
+
+Custom Components:
+- txt_conponents.tsx   
+- conversation_list_item.tsx
+- message_bubble.tsx  
+- Pfile Avatar.tsx
+
+--------------------------------------
+SERVICES (services/)
+--------------------------------------
+
+- socket_service.ts  : Socket.IO client connection
+- cloundinary_services.ts to update the user profile image
+- profile_services.ts
+- conversation_services.ts
+
+--------------------------------------
+CONTEXT (context/)
+--------------------------------------
+
+- socket_context.tsx : Socket.IO connection context
+  * Real-time messaging support
+
+--------------------------------------
+BACKEND (BACKEND/)
+--------------------------------------
+
+Server: Socket.IO (index.ts)
+- Port: 5000 (default)
+- CORS enabled
+- MongoDB database connection
+
+Routes:
+- /auth : Authentication routes (user profile/image)
+- conversation : (direct messages, group messages)
+- 

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(dir \"c:\\\\projets\\\\projets\\\\0.Reat Native\\\\Chat\\\\BACKEND\" /b)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx expo install react-native-ble-plx)",
+      "Bash(gradlew.bat assembleRelease:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(npx eas:*)",
+      "Bash(eas build:*)",
+      "Bash(npm exec:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb:*)",
+      "Bash(dir /S \"c:\\\\projets\\\\projets\\\\0.Reat Native\\\\Chat\\\\app\")",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(find:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx expo start:*)",
+      "Bash(timeout:*)",
+      "Bash(if exist node_modules.cache rmdir /s /q node_modules.cache)",
+      "Bash(if exist .expo rmdir /s /q .expo)"
+    ]
+  }
+}

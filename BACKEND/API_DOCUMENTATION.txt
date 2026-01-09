@@ -1,0 +1,425 @@
+================================================================================
+                         CHAT API DOCUMENTATION
+================================================================================
+
+BASE URL: http://localhost:5000
+
+================================================================================
+                            REST ENDPOINTS
+================================================================================
+
+--------------------------------------------------------------------------------
+1. REGISTER USER
+--------------------------------------------------------------------------------
+POST /auth/register
+
+Headers:
+  Content-Type: application/json
+
+Body:
+{
+  "email": "user@example.com",      (required)
+  "password": "yourpassword",       (required)
+  "name": "John Doe",               (required)
+  "img": "https://url-to-image"     (optional)
+}
+
+Response (201):
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "img": "",
+    "token": "jwt_token_here"
+  }
+}
+
+--------------------------------------------------------------------------------
+2. LOGIN USER
+--------------------------------------------------------------------------------
+POST /auth/login
+
+Headers:
+  Content-Type: application/json
+
+Body:
+{
+  "email": "user@example.com",      (required)
+  "password": "yourpassword"        (required)
+}
+
+Response (200):
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "img": "",
+    "token": "jwt_token_here"
+  }
+}
+
+--------------------------------------------------------------------------------
+3. UPDATE PROFILE IMAGE (Protected)
+--------------------------------------------------------------------------------
+PATCH /auth/profile-image
+
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer your_jwt_token    (required)
+
+Body:
+{
+  "img": "https://url-to-new-image"     (required, string)
+}
+
+Response (200):
+{
+  "success": true,
+  "message": "Profile image updated successfully",
+  "data": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "img": "https://url-to-new-image"
+  }
+}
+
+--------------------------------------------------------------------------------
+4. TEST ENDPOINT
+--------------------------------------------------------------------------------
+GET /
+
+Response (200):
+{
+  "success": true,
+  "message": "API is running"
+}
+
+
+================================================================================
+                         SOCKET.IO EVENTS
+================================================================================
+
+CONNECTION URL: http://localhost:5000
+
+--------------------------------------------------------------------------------
+AUTHENTICATION (Required for connection)
+--------------------------------------------------------------------------------
+Connect with token in one of these ways:
+
+Option 1 - Auth object (Recommended):
+{
+  auth: {
+    token: "your_jwt_token"
+  }
+}
+
+Option 2 - Headers:
+{
+  extraHeaders: {
+    Authorization: "Bearer your_jwt_token"
+  }
+}
+
+Option 3 - Query params:
+{
+  query: {
+    token: "your_jwt_token"
+  }
+}
+
+================================================================================
+                    CLIENT -> SERVER EVENTS (EMIT)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. JOIN CHAT ROOM
+--------------------------------------------------------------------------------
+Event: "chat:join"
+
+Data: "room_id_string"
+
+Example:
+  socket.emit("chat:join", "room_123")
+
+--------------------------------------------------------------------------------
+2. LEAVE CHAT ROOM
+--------------------------------------------------------------------------------
+Event: "chat:leave"
+
+Data: "room_id_string"
+
+Example:
+  socket.emit("chat:leave", "room_123")
+
+--------------------------------------------------------------------------------
+3. SEND MESSAGE TO ROOM
+--------------------------------------------------------------------------------
+Event: "chat:message"
+
+Data:
+{
+  "roomId": "room_123",             (required)
+  "message": "Hello everyone!",     (required)
+  "type": "text"                    (optional, default: "text")
+}
+
+Example:
+  socket.emit("chat:message", {
+    roomId: "room_123",
+    message: "Hello!",
+    type: "text"
+  })
+
+--------------------------------------------------------------------------------
+4. SEND DIRECT MESSAGE
+--------------------------------------------------------------------------------
+Event: "chat:direct_message"
+
+Data:
+{
+  "recipientId": "user_id",         (required)
+  "message": "Hi there!",           (required)
+  "type": "text"                    (optional, default: "text")
+}
+
+Example:
+  socket.emit("chat:direct_message", {
+    recipientId: "64abc123def456",
+    message: "Private message",
+    type: "text"
+  })
+
+--------------------------------------------------------------------------------
+5. TYPING INDICATOR
+--------------------------------------------------------------------------------
+Event: "chat:typing"
+
+Data:
+{
+  "roomId": "room_123",             (required)
+  "isTyping": true                  (required, boolean)
+}
+
+Example:
+  socket.emit("chat:typing", {
+    roomId: "room_123",
+    isTyping: true
+  })
+
+--------------------------------------------------------------------------------
+6. MARK MESSAGES AS READ
+--------------------------------------------------------------------------------
+Event: "chat:read"
+
+Data:
+{
+  "roomId": "room_123",             (required)
+  "messageIds": ["msg_1", "msg_2"]  (required, array)
+}
+
+Example:
+  socket.emit("chat:read", {
+    roomId: "room_123",
+    messageIds: ["1234-socketid", "5678-socketid"]
+  })
+
+--------------------------------------------------------------------------------
+7. GET ONLINE USERS
+--------------------------------------------------------------------------------
+Event: "users:get_online"
+
+Data: callback function
+
+Example:
+  socket.emit("users:get_online", (users) => {
+    console.log("Online users:", users)
+  })
+
+Response (via callback):
+  ["user_id_1", "user_id_2", "user_id_3"]
+
+--------------------------------------------------------------------------------
+8. CHECK IF USER IS ONLINE
+--------------------------------------------------------------------------------
+Event: "users:is_online"
+
+Data: user_id, callback function
+
+Example:
+  socket.emit("users:is_online", "user_id_123", (isOnline) => {
+    console.log("Is online:", isOnline)
+  })
+
+Response (via callback):
+  true / false
+
+
+================================================================================
+                    SERVER -> CLIENT EVENTS (LISTEN)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. RECEIVE MESSAGE
+--------------------------------------------------------------------------------
+Event: "chat:message"
+
+Data received:
+{
+  "id": "1234567890-socketid",
+  "senderId": "user_id",
+  "roomId": "room_123",
+  "message": "Hello!",
+  "type": "text",
+  "timestamp": "2024-01-08T12:00:00.000Z"
+}
+
+--------------------------------------------------------------------------------
+2. RECEIVE DIRECT MESSAGE
+--------------------------------------------------------------------------------
+Event: "chat:direct_message"
+
+Data received:
+{
+  "id": "1234567890-socketid",
+  "senderId": "user_id",
+  "recipientId": "your_user_id",
+  "message": "Hi there!",
+  "type": "text",
+  "timestamp": "2024-01-08T12:00:00.000Z"
+}
+
+--------------------------------------------------------------------------------
+3. USER JOINED ROOM
+--------------------------------------------------------------------------------
+Event: "chat:user_joined"
+
+Data received:
+{
+  "userId": "user_id",
+  "roomId": "room_123",
+  "timestamp": "2024-01-08T12:00:00.000Z"
+}
+
+--------------------------------------------------------------------------------
+4. USER LEFT ROOM
+--------------------------------------------------------------------------------
+Event: "chat:user_left"
+
+Data received:
+{
+  "userId": "user_id",
+  "roomId": "room_123",
+  "timestamp": "2024-01-08T12:00:00.000Z"
+}
+
+--------------------------------------------------------------------------------
+5. TYPING INDICATOR
+--------------------------------------------------------------------------------
+Event: "chat:typing"
+
+Data received:
+{
+  "userId": "user_id",
+  "roomId": "room_123",
+  "isTyping": true
+}
+
+--------------------------------------------------------------------------------
+6. READ RECEIPT
+--------------------------------------------------------------------------------
+Event: "chat:read"
+
+Data received:
+{
+  "userId": "user_id",
+  "roomId": "room_123",
+  "messageIds": ["msg_1", "msg_2"],
+  "timestamp": "2024-01-08T12:00:00.000Z"
+}
+
+--------------------------------------------------------------------------------
+7. USER CAME ONLINE
+--------------------------------------------------------------------------------
+Event: "user:online"
+
+Data received:
+{
+  "userId": "user_id"
+}
+
+--------------------------------------------------------------------------------
+8. USER WENT OFFLINE
+--------------------------------------------------------------------------------
+Event: "user:offline"
+
+Data received:
+{
+  "userId": "user_id"
+}
+
+
+================================================================================
+                         CONNECTION ERRORS
+================================================================================
+
+Error: "Authentication error: No token provided"
+  - Token was not sent in auth, headers, or query
+
+Error: "Authentication error: Invalid or expired token"
+  - JWT token is invalid or has expired
+
+Error: "Authentication error: User not found"
+  - User ID in token doesn't exist in database
+
+Error: "Authentication error: Server error"
+  - Internal server error during authentication
+
+
+================================================================================
+                      REACT NATIVE EXAMPLE
+================================================================================
+
+import { io } from "socket.io-client";
+
+// Connect
+const socket = io("http://YOUR_IP:5000", {
+  auth: {
+    token: "your_jwt_token_from_login"
+  }
+});
+
+// Handle connection
+socket.on("connect", () => {
+  console.log("Connected to server");
+});
+
+socket.on("connect_error", (error) => {
+  console.log("Connection failed:", error.message);
+});
+
+// Join a room
+socket.emit("chat:join", "room_123");
+
+// Send message
+socket.emit("chat:message", {
+  roomId: "room_123",
+  message: "Hello!",
+  type: "text"
+});
+
+// Listen for messages
+socket.on("chat:message", (data) => {
+  console.log("New message:", data);
+});
+
+// Disconnect
+socket.disconnect();
+
+================================================================================

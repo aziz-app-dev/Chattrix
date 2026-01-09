@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(dir /s \"c:\\\\projets\\\\projets\\\\0.Reat Native\\\\Chat\\\\BACKEND\\\\src\")",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
