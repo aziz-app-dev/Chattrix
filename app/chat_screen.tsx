@@ -320,7 +320,7 @@ const ChatScreen = () => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={keyboardVisible ? 40 : 0}
+        keyboardVerticalOffset={keyboardVisible ? Platform.OS === "ios" ?40:50 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.innerContainer}>
@@ -410,7 +410,7 @@ const ChatScreen = () => {
               <View
                 style={[
                   styles.inputContainer,
-                  { paddingBottom: Math.max(insets.bottom, 12) },
+                  // { paddingBottom: Math.max(insets.bottom, 12) },
                 ]}
               >
                 <TouchableOpacity
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingVertical: 10,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.neutral100,

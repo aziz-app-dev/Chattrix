@@ -23,7 +23,10 @@
       "Bash(npx expo start:*)",
       "Bash(timeout:*)",
       "Bash(if exist node_modules.cache rmdir /s /q node_modules.cache)",
-      "Bash(if exist .expo rmdir /s /q .expo)"
+      "Bash(if exist .expo rmdir /s /q .expo)",
+      "Bash(.gradlew.bat --stop)",
+      "Bash(cd:*)",
+      "Bash(npx expo run:android)"
     ]
   }
 }

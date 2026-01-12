@@ -43,7 +43,7 @@ const CallContext = createContext<CallContextProps>({
   toggleVideo: () => {},
   toggleSpeaker: () => {},
   switchCamera: async () => {},
-  requestCallPermissions: async () => false,
+  requestCallPermissions: async (_type: "audio" | "video") => false,
   navigateToOngoingCall: () => {},
 });
 
@@ -70,8 +70,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   const [hasPermissions, setHasPermissions] = useState(false);
 
   // Refs
-  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const callTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentCallRef = useRef<CallProps | null>(null);
 
   // Keep currentCallRef in sync
@@ -137,7 +137,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
   // Check if user is trying to navigate away from call - redirect back to call screen
   useEffect(() => {
-    const isOnCallScreen = segments.includes("(call)");
+    const isOnCallScreen = (segments as string[]).includes("(call)");
     const hasActiveCall = isInCall || isCalling || incomingCall;
 
     if (hasActiveCall && !isOnCallScreen) {
@@ -156,7 +156,22 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       if (!currentCallRef.current) return;
       const callId = currentCallRef.current._id;
 
-      const pc = webrtcService.createPeerConnection(
+      // Store peer connection info FIRST before creating connection
+      // This ensures the peer exists when onTrack fires
+      setPeerConnections((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(peerId, {
+          peerId,
+          peerName,
+          peerImg,
+          remoteStream: null,
+          isAudioMuted: false,
+          isVideoOff: false,
+        });
+        return newMap;
+      });
+
+      webrtcService.createPeerConnection(
         peerId,
         // On ICE candidate
         (candidate) => {
@@ -164,11 +179,22 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         },
         // On track received
         (stream) => {
+          console.log(`Track received for peer ${peerId}:`, stream);
           setPeerConnections((prev) => {
             const newMap = new Map(prev);
             const existing = newMap.get(peerId);
             if (existing) {
               newMap.set(peerId, { ...existing, remoteStream: stream });
+            } else {
+              // Create entry if it doesn't exist yet (race condition fallback)
+              newMap.set(peerId, {
+                peerId,
+                peerName,
+                peerImg,
+                remoteStream: stream,
+                isAudioMuted: false,
+                isVideoOff: false,
+              });
             }
             return newMap;
           });
@@ -183,20 +209,6 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       );
-
-      // Store peer connection info
-      setPeerConnections((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(peerId, {
-          peerId,
-          peerName,
-          peerImg,
-          remoteStream: null,
-          isAudioMuted: false,
-          isVideoOff: false,
-        });
-        return newMap;
-      });
 
       // Create and send offer if we're the caller
       if (createOffer) {
@@ -244,8 +256,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     setIsVideoOff(false);
     setCallDuration(0);
 
-    // Navigate back
-    router.back();
+    // Navigate to main screen (back() may not work if opened from notification)
+    router.replace("/(tabs)");
   }, [router]);
 
   // Setup socket listeners for call events
@@ -476,7 +488,14 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       type: "audio" | "video",
       conversationId?: string
     ) => {
-      if (!token || isCalling || isInCall) return;
+      if (!token) return;
+
+      // Check if there's already an ongoing call - navigate to it instead of starting new one
+      if (isCalling || isInCall || incomingCall) {
+        console.log("Already in a call, navigating to ongoing call");
+        navigateToOngoingCall();
+        return;
+      }
 
       // Check if WebRTC is available
       if (!webrtcService.isAvailable()) {
@@ -534,7 +553,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         webrtcService.cleanup();
       }
     },
-    [token, isCalling, isInCall, router]
+    [token, isCalling, isInCall, incomingCall, router, navigateToOngoingCall]
   );
 
   const acceptCall = useCallback(async () => {
@@ -547,7 +566,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       // Decline call if permissions not granted
       socketService.declineCall(incomingCall.call._id);
       setIncomingCall(null);
-      router.back();
+      // Use replace to go to main screen (back() may not work if opened from notification)
+      router.replace("/(tabs)");
       return;
     }
 
@@ -569,18 +589,36 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       // Update call status via API
       await updateCallStatusAPI(token, incomingCall.call._id, "ongoing");
 
-      // Setup peer connections with existing participants
+      // Setup peer connections with the call initiator and any joined participants
+      // The initiator may have status other than "joined" initially
+      const initiatorId = incomingCall.call.initiator._id;
+
+      // Setup connection with initiator if not self
+      if (initiatorId !== user?.id && !webrtcService.hasPeerConnection(initiatorId)) {
+        console.log("Setting up peer connection with initiator:", initiatorId);
+        await setupPeerConnection(
+          initiatorId,
+          incomingCall.call.initiator.name,
+          incomingCall.call.initiator.img,
+          false
+        );
+      }
+
+      // Also setup connections with any other joined participants
       for (const participant of incomingCall.call.participants) {
         if (
           participant.user._id !== user?.id &&
-          participant.status === "joined"
+          participant.user._id !== initiatorId &&
+          (participant.status === "joined" || participant.status === "pending")
         ) {
-          await setupPeerConnection(
-            participant.user._id,
-            participant.user.name,
-            participant.user.img,
-            false
-          );
+          if (!webrtcService.hasPeerConnection(participant.user._id)) {
+            await setupPeerConnection(
+              participant.user._id,
+              participant.user.name,
+              participant.user.img,
+              false
+            );
+          }
         }
       }
 
@@ -604,7 +642,8 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
     socketService.declineCall(incomingCall.call._id);
 
     setIncomingCall(null);
-    router.back();
+    // Use replace to go to main screen (back() may not work if opened from notification)
+    router.replace("/(tabs)");
   }, [incomingCall, router]);
 
   const endCall = useCallback(() => {

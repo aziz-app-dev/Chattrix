@@ -143,12 +143,62 @@ class WebRTCService {
       throw new Error(`No peer connection for ${peerId}`);
     }
 
-    await peerData.connection.setRemoteDescription(
-      new RTCSessionDescription(offer)
-    );
+    const pc = peerData.connection;
+    const currentState = pc.signalingState;
+    console.log(`handleOffer called, current signaling state: ${currentState}`);
 
-    const answer = await peerData.connection.createAnswer();
-    await peerData.connection.setLocalDescription(answer);
+    // If already stable, negotiation is complete - skip
+    if (currentState === "stable" && pc.remoteDescription) {
+      console.warn("Connection already stable with remote description, skipping duplicate offer");
+      return { type: "answer", sdp: pc.localDescription?.sdp || "" };
+    }
+
+    // Handle different signaling states
+    if (currentState === "have-remote-offer") {
+      // Already have a remote offer, just create answer if we haven't yet
+      console.warn("Already have remote offer, creating answer");
+      try {
+        const answer = await pc.createAnswer();
+        if (pc.signalingState === "have-remote-offer") {
+          await pc.setLocalDescription(answer);
+        }
+        await this.processIceCandidateQueue(peerId);
+        return answer;
+      } catch (err) {
+        console.warn("Error creating answer in have-remote-offer state:", err);
+        return { type: "answer", sdp: pc.localDescription?.sdp || "" };
+      }
+    }
+
+    if (currentState === "have-local-offer") {
+      // Glare condition: both sides sent offers
+      // Roll back our local offer and accept the remote one
+      console.log("Glare detected, rolling back local offer");
+      try {
+        await pc.setLocalDescription({ type: "rollback" });
+      } catch (err) {
+        console.warn("Error rolling back:", err);
+      }
+    } else if (currentState !== "stable") {
+      console.warn(`Unexpected signaling state: ${currentState}, skipping offer`);
+      throw new Error(`Cannot handle offer in state: ${currentState}`);
+    }
+
+    // Now should be in stable state, set remote description
+    if (pc.signalingState !== "stable") {
+      console.warn(`Expected stable state but got ${pc.signalingState}`);
+    }
+
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+    const answer = await pc.createAnswer();
+
+    // Check state before setting local description
+    if (pc.signalingState === "have-remote-offer") {
+      await pc.setLocalDescription(answer);
+    } else {
+      console.warn(`Skipping setLocalDescription, state is ${pc.signalingState}`);
+    }
 
     // Process queued ICE candidates
     await this.processIceCandidateQueue(peerId);
@@ -170,9 +220,15 @@ class WebRTCService {
       throw new Error(`No peer connection for ${peerId}`);
     }
 
-    await peerData.connection.setRemoteDescription(
-      new RTCSessionDescription(answer)
-    );
+    const pc = peerData.connection;
+
+    // Only set remote description if we're expecting an answer
+    if (pc.signalingState !== "have-local-offer") {
+      console.warn(`Cannot set answer in state: ${pc.signalingState}`);
+      return;
+    }
+
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
     // Process queued ICE candidates
     await this.processIceCandidateQueue(peerId);
