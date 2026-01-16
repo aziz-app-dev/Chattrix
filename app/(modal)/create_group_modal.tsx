@@ -171,7 +171,7 @@ const CreateGroupModal = () => {
           placeholder="Group name"
           value={groupName}
           onChangeText={setGroupName}
-          containerStyle={styles.groupNameInput}
+          // containerStyle={styles.groupNameInput}
         />
       </View>
 
@@ -198,7 +198,7 @@ const CreateGroupModal = () => {
                 >
                   <Ionicons name="close" size={12} color={colors.white} />
                 </TouchableOpacity>
-                <MyTxt fontSize={11} style={styles.selectedName} numberOfLines={1}>
+                <MyTxt fontSize={11} style={styles.selectedName} lineHeight={20}>
                   {user.name.split(" ")[0]}
                 </MyTxt>
               </View>
