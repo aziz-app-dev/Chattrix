@@ -8,12 +8,13 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
+import { AppAlert } from "@/components/custom_alert";
+import { Toast } from "@/components/toast";
 
 interface ProfileImagePickerProps {
   currentImage: string | null;
@@ -35,9 +36,11 @@ const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert(
+      AppAlert.alert(
         "Permission Required",
-        "Please allow access to your photo library to change your profile picture."
+        "Please allow access to your photo library to change your profile picture.",
+        undefined,
+        "warning"
       );
       return;
     }
@@ -56,7 +59,7 @@ const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
 
   const handleImageUpload = async (imageUri: string) => {
     if (!token || !user?.id) {
-      Alert.alert("Error", "You must be logged in to update your profile image.");
+      Toast.error("You must be logged in to update your profile image.", "Not signed in");
       return;
     }
 
@@ -86,10 +89,10 @@ const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
       // Notify parent component
       onImageUpdated?.(cloudinaryUrl);
 
-      Alert.alert("Success", "Profile image updated successfully!");
+      Toast.success("Profile image updated successfully!");
     } catch (error: any) {
-      console.log("Profile image update error:", error);
-      Alert.alert("Error", error.message || "Failed to update profile image.");
+      console.log("📷 [ProfileImagePicker] update error:", error?.message);
+      Toast.error(error.message || "Failed to update profile image.", "Upload failed");
     } finally {
       setIsLoading(false);
     }

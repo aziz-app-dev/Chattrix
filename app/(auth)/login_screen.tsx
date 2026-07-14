@@ -8,7 +8,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
-    Alert,
     ImageBackground,
     KeyboardAvoidingView,
     Platform,
@@ -17,6 +16,7 @@ import {
     StyleSheet,
     View,
 } from "react-native";
+import { Toast } from "@/components/toast";
 
 const LoginScreen = () => {
   const emailRef = useRef("");
@@ -26,21 +26,20 @@ const LoginScreen = () => {
   const { signIn } = useAuth();
 
   const onsubmit = async () => {
-    if (
-      !emailRef.current.trim() ||
-      !passRef.current.trim()
-    ) {
-      Alert.alert("Login", "Please fill all the feilds");
+    if (!emailRef.current.trim() || !passRef.current.trim()) {
+      Toast.warning("Please fill in all the fields.", "Login");
       return;
     }
     if (passRef.current.trim().length <= 4) {
-      Alert.alert("Login", "Password length must br grater then 4");
+      Toast.warning("Password must be longer than 4 characters.", "Login");
+      return;
     }
     try {
       setLoading(true);
+      // Success/error toasts are handled inside signIn()
       await signIn(emailRef.current, passRef.current);
     } catch (error: any) {
-      console.log("Login error", error.message);
+      console.log("🔐 [LoginScreen] sign in error:", error?.message);
     } finally {
       setLoading(false);
     }

@@ -1,11 +1,18 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { colors } from "@/constants/theme";
+import { useAuth } from "@/context/auth_context";
 
 export default function TabLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Never show Home before auth is known / to a logged-out user.
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Redirect href="/(auth)/welcome_screen" />;
+
   return (
     <Tabs
       screenOptions={{

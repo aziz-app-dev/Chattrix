@@ -13,7 +13,6 @@ import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   ScrollView,
@@ -22,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Toast } from "@/components/toast";
 
 interface User {
   _id: string;
@@ -77,12 +77,12 @@ const CreateGroupModal = () => {
     if (!token) return;
 
     if (!groupName.trim()) {
-      Alert.alert("Error", "Please enter a group name");
+      Toast.warning("Please enter a group name.", "Create group");
       return;
     }
 
     if (selectedUsers.length < 1) {
-      Alert.alert("Error", "Please select at least one member");
+      Toast.warning("Please select at least one member.", "Create group");
       return;
     }
 
@@ -106,7 +106,7 @@ const CreateGroupModal = () => {
         },
       });
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to create group");
+      Toast.error(error.message || "Failed to create group.", "Create group");
       setIsCreating(false);
     }
   };

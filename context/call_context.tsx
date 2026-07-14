@@ -18,7 +18,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { Alert, Platform } from "react-native";
+import { Platform } from "react-native";
+import { AppAlert } from "@/components/custom_alert";
 import { useAuth } from "./auth_context";
 import { Camera } from "expo-camera";
 import { Audio } from "expo-av";
@@ -86,10 +87,11 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         // Request audio permission (required for both audio and video calls)
         const audioPermission = await Audio.requestPermissionsAsync();
         if (audioPermission.status !== "granted") {
-          Alert.alert(
+          AppAlert.alert(
             "Microphone Permission Required",
             "Please allow microphone access to make calls. Go to Settings > Apps > Chat > Permissions to enable it.",
-            [{ text: "OK" }]
+            undefined,
+            "warning"
           );
           return false;
         }
@@ -98,10 +100,11 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         if (type === "video") {
           const cameraPermission = await Camera.requestCameraPermissionsAsync();
           if (cameraPermission.status !== "granted") {
-            Alert.alert(
+            AppAlert.alert(
               "Camera Permission Required",
               "Please allow camera access to make video calls. Go to Settings > Apps > Chat > Permissions to enable it.",
-              [{ text: "OK" }]
+              undefined,
+              "warning"
             );
             return false;
           }
@@ -111,10 +114,11 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         return true;
       } catch (error) {
         console.error("Error requesting permissions:", error);
-        Alert.alert(
+        AppAlert.alert(
           "Permission Error",
           "Failed to request permissions. Please try again.",
-          [{ text: "OK" }]
+          undefined,
+          "error"
         );
         return false;
       }
@@ -499,10 +503,11 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
       // Check if WebRTC is available
       if (!webrtcService.isAvailable()) {
-        Alert.alert(
+        AppAlert.alert(
           "Calling Not Available",
           "Audio/video calling requires a development build. Please run 'npx expo prebuild' and 'npx expo run:android' or 'npx expo run:ios' to enable calling.",
-          [{ text: "OK" }]
+          undefined,
+          "info"
         );
         return;
       }

@@ -14,13 +14,14 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 
 import {
-    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
     View,
 } from "react-native";
+import { AppAlert } from "@/components/custom_alert";
+import { Toast } from "@/components/toast";
 
 const ProfileModal = () => {
   const { user: curentUser, token, signOut, updateToken } = useAuth();
@@ -42,18 +43,18 @@ const ProfileModal = () => {
 
   const handleUpdateProfile = async () => {
     if (!token || !curentUser?.id) {
-      Alert.alert("Error", "You must be logged in to update your profile.");
+      Toast.error("You must be logged in to update your profile.", "Not signed in");
       return;
     }
 
     // Check if name has changed
     if (useData.name === curentUser?.name) {
-      Alert.alert("Info", "No changes to update.");
+      Toast.info("No changes to update.");
       return;
     }
 
     if (!useData.name.trim()) {
-      Alert.alert("Error", "Name cannot be empty.");
+      Toast.warning("Name cannot be empty.");
       return;
     }
 
@@ -69,25 +70,21 @@ const ProfileModal = () => {
       // Emit socket event to notify other users
       emitProfileUpdate(curentUser.id, curentUser.avatar || "");
 
-      Alert.alert("Success", "Profile updated successfully!");
+      Toast.success("Profile updated successfully!");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to update profile.");
+      Toast.error(error.message || "Failed to update profile.", "Update failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   const showLogputAlert = () => {
-    Alert.alert("Confirm", "Are you sure you want to  logout", [
-      {
-        text: "Cancle",
-        onPress: () => console.log("cancle"),
-      },
-      {
-        text: "Done",
-        onPress: () => signOut(),
-      },
-    ]);
+    AppAlert.confirm(
+      "Log out",
+      "Are you sure you want to log out?",
+      () => signOut(),
+      { confirmText: "Log out", cancelText: "Cancel", destructive: true }
+    );
   };
   return (
     <View style={styles.overlay}>

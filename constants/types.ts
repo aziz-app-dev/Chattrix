@@ -50,6 +50,7 @@ export type AuthContextProps = {
   token: string | null;
   user: UserProps | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (
     email: string,

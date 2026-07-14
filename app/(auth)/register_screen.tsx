@@ -8,7 +8,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { Toast } from "@/components/toast";
 
 const RegisterScreen = () => {
   const nameRef = useRef("");
@@ -32,14 +32,19 @@ const RegisterScreen = () => {
       !emailRef.current.trim() ||
       !passRef.current.trim()
     ) {
-      Alert.alert("Sign Up", "Please fill all the feilds");
+      Toast.warning("Please fill in all the fields.", "Sign Up");
+      return;
+    }
+    if (passRef.current.trim().length <= 4) {
+      Toast.warning("Password must be longer than 4 characters.", "Sign Up");
       return;
     }
     try {
       setLoading(true);
+      // Success/error toasts are handled inside signUp()
       await signUp(emailRef.current, nameRef.current, passRef.current);
     } catch (error: any) {
-      console.log("Resgitration error", error.message);
+      console.log("🔐 [RegisterScreen] sign up error:", error?.message);
     } finally {
       setLoading(false);
     }

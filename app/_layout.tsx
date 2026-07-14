@@ -6,6 +6,9 @@ import {
 import { Stack } from "expo-router";
 import "react-native-reanimated";
 
+import { AppAlertHost } from "@/components/custom_alert";
+import { ToastHost } from "@/components/toast";
+
 import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth_context";
 import { CallProvider } from "@/context/call_context";
@@ -15,6 +18,12 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Always open on the splash screen while auth is resolved, so protected
+// screens (tabs/home) never flash before redirecting to Get Started / Home.
+export const unstable_settings = {
+  initialRouteName: "splash_screen",
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -74,6 +83,9 @@ export default function RootLayout() {
                 backgroundColor={colors.neutral900}
                 // translucent={false}
               />
+              {/* Global custom UI feedback hosts (replace default Alert) */}
+              <ToastHost />
+              <AppAlertHost />
               </ThemeProvider>
             </CallProvider>
           </SocketProvider>

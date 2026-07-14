@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
 export interface ICallParticipant {
   user: Types.ObjectId;
@@ -47,7 +47,7 @@ const CallParticipantSchema = new Schema<ICallParticipant>(
       default: "pending",
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CallSchema = new Schema<ICall>(
@@ -94,7 +94,7 @@ const CallSchema = new Schema<ICall>(
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 CallSchema.index({ initiator: 1, createdAt: -1 });
