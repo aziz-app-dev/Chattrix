@@ -28,8 +28,9 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  // Set bottom navigation bar color for Android
-  NavigationBar.setBackgroundColorAsync(colors.neutral900);
+  // Set bottom navigation bar button color for Android
+  // (setBackgroundColorAsync is unsupported with edge-to-edge enabled,
+  //  so only the button style is set here)
   NavigationBar.setButtonStyleAsync("light");
 
   return (

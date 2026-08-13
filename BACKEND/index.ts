@@ -1,15 +1,15 @@
-import express, { type Application } from "express";
-import { createServer } from "http";
 import cors from "cors";
 import dotenv from "dotenv";
+import express, { type Application } from "express";
+import { createServer } from "http";
 import connectDB from "./src/config/db.js";
-import authRoutes from "./src/routes/auth_route.js";
-import conversationRoutes from "./src/routes/conversation_route.js";
-import callRoutes from "./src/routes/call_route.js";
-import { initializeSocket } from "./src/socket/socket_server.js";
-import { setSocketIO } from "./src/controller/conversation_controller.js";
 import { setCallSocketIO } from "./src/controller/call_controller.js";
+import { setSocketIO } from "./src/controller/conversation_controller.js";
+import authRoutes from "./src/routes/auth_route.js";
+import callRoutes from "./src/routes/call_route.js";
+import conversationRoutes from "./src/routes/conversation_route.js";
 import { initializeFirebase } from "./src/services/fcm_service.js";
+import { initializeSocket } from "./src/socket/socket_server.js";
 
 dotenv.config();
 
