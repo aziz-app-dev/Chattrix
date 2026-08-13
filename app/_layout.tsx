@@ -5,6 +5,7 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import "react-native-reanimated";
+import React, { useEffect } from "react";
 
 import { AppAlertHost } from "@/components/custom_alert";
 import { ToastHost } from "@/components/toast";
@@ -17,8 +18,13 @@ import { NotificationProvider } from "@/context/notification_context";
 import { SocketProvider } from "@/context/socket_context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import * as NavigationBar from "expo-navigation-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Hold the native splash screen until the JS splash (splash_screen.tsx) has
+// mounted, so there is never a blank/flashing gap on app start.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Always open on the splash screen while auth is resolved, so protected
 // screens (tabs/home) never flash before redirecting to Get Started / Home.
@@ -28,6 +34,11 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  // Hide the native splash as soon as the JS splash screen is rendering
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   // Set bottom navigation bar button color for Android
   // (setBackgroundColorAsync is unsupported with edge-to-edge enabled,
