@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Toast } from "@/components/toast";
 
 type TabType = "messages" | "groups";
 
@@ -57,8 +58,12 @@ export default function HomeScreen() {
       if (currentType === type) {
         setConversations(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching conversations:", error);
+      Toast.error(
+        error?.message || "Failed to fetch conversations",
+        "Load failed"
+      );
     } finally {
       setIsInitialLoading(false);
       setIsRefreshing(false);

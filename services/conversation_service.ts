@@ -6,6 +6,18 @@ const getAuthHeaders = (token: string) => ({
   "Content-Type": "application/json",
 });
 
+const getApiErrorMessage = (error: any, fallback: string): string => {
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.response?.data?.error) return error.response.data.error;
+  if (error?.response) {
+    return `Request failed (${error.response.status}).`;
+  }
+  if (error?.request) {
+    return "Cannot reach the server. Please check your connection and try again.";
+  }
+  return error?.message || fallback;
+};
+
 // Get all conversations (optionally filtered by type)
 export const getConversations = async (
   token: string,
@@ -19,9 +31,7 @@ export const getConversations = async (
     return response.data.data;
   } catch (error: any) {
     console.log("Get conversations error:", error);
-    throw new Error(
-      error?.response?.data?.message || "Failed to fetch conversations"
-    );
+    throw new Error(getApiErrorMessage(error, "Failed to fetch conversations"));
   }
 };
 
@@ -40,7 +50,7 @@ export const createDirectConversation = async (
   } catch (error: any) {
     console.log("Create direct conversation error:", error);
     throw new Error(
-      error?.response?.data?.message || "Failed to create conversation"
+      getApiErrorMessage(error, "Failed to create conversation")
     );
   }
 };
@@ -61,9 +71,7 @@ export const createGroupConversation = async (
     return response.data.data;
   } catch (error: any) {
     console.log("Create group conversation error:", error);
-    throw new Error(
-      error?.response?.data?.message || "Failed to create group"
-    );
+    throw new Error(getApiErrorMessage(error, "Failed to create group"));
   }
 };
 
@@ -82,9 +90,7 @@ export const getMessages = async (
     return response.data.data;
   } catch (error: any) {
     console.log("Get messages error:", error);
-    throw new Error(
-      error?.response?.data?.message || "Failed to fetch messages"
-    );
+    throw new Error(getApiErrorMessage(error, "Failed to fetch messages"));
   }
 };
 
@@ -105,9 +111,7 @@ export const sendMessage = async (
     return response.data.data;
   } catch (error: any) {
     console.log("Send message error:", error);
-    throw new Error(
-      error?.response?.data?.message || "Failed to send message"
-    );
+    throw new Error(getApiErrorMessage(error, "Failed to send message"));
   }
 };
 
@@ -121,6 +125,6 @@ export const getUsers = async (token: string, search?: string) => {
     return response.data.data;
   } catch (error: any) {
     console.log("Get users error:", error);
-    throw new Error(error?.response?.data?.message || "Failed to fetch users");
+    throw new Error(getApiErrorMessage(error, "Failed to fetch users"));
   }
 };

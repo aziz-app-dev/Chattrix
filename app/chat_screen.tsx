@@ -1,5 +1,6 @@
 import BackBtn from "@/components/back_btn_component";
 import MessageBubble from "@/components/message_bubble";
+import { Toast } from "@/components/toast";
 import MyTxt from "@/components/txt_conponents";
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth_context";
@@ -119,8 +120,9 @@ const ChatScreen = () => {
     try {
       const data = await getMessages(token, conversationId);
       setMessages(data);
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching messages:", error);
+      Toast.error(error?.message || "Failed to load messages", "Load failed");
     } finally {
       setIsLoading(false);
     }
@@ -232,8 +234,9 @@ const ChatScreen = () => {
       setMessages((prev) =>
         prev.map((msg) => (msg._id === tempMessage._id ? sentMessage : msg))
       );
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error sending message:", error);
+      Toast.error(error?.message || "Failed to send message", "Send failed");
       // Remove temp message on error
       setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
       setInputText(messageText); // Restore input
@@ -301,8 +304,9 @@ const ChatScreen = () => {
       setMessages((prev) =>
         prev.map((msg) => (msg._id === tempMessage._id ? sentMessage : msg))
       );
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error uploading image:", error);
+      Toast.error(error?.message || "Failed to send image", "Upload failed");
       // Remove temp message on error
       setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
     } finally {

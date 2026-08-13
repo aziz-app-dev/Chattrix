@@ -1,5 +1,6 @@
 import BackBtn from "@/components/back_btn_component";
 import MyTxt from "@/components/txt_conponents";
+import { Toast } from "@/components/toast";
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth_context";
 import { useSocket } from "@/context/socket_context";
@@ -40,8 +41,9 @@ const UsersListModal = () => {
     try {
       const data = await getUsers(token, searchQuery);
       setUsers(data);
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching users:", error);
+      Toast.error(error?.message || "Failed to load users", "Load failed");
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +71,9 @@ const UsersListModal = () => {
           type: "direct",
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error creating conversation:", error);
+      Toast.error(error?.message || "Failed to create conversation", "Error");
       setIsCreating(false);
     }
   };

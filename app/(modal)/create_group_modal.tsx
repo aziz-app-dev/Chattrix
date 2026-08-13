@@ -44,8 +44,9 @@ const CreateGroupModal = () => {
     try {
       const data = await getUsers(token, searchQuery);
       setUsers(data);
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching users:", error);
+      Toast.error(error?.message || "Failed to load users", "Load failed");
     } finally {
       setIsLoading(false);
     }
