@@ -3,12 +3,13 @@ import MessageBubble from "@/components/message_bubble";
 import { Toast } from "@/components/toast";
 import MyTxt from "@/components/txt_conponents";
 import { colors } from "@/constants/theme";
+import { useAppData } from "@/context/app_data_context";
 import { useAuth } from "@/context/auth_context";
 import { useCall } from "@/context/call_context";
 import { useSocket } from "@/context/socket_context";
 import { uploadImageToCloudinary } from "@/services/cloundinary_services";
 import { getMessages, sendMessage } from "@/services/conversation_service";
-import { cacheKeys, saveCache, loadCache } from "@/services/offline_cache";
+import { cacheKeys, loadCache } from "@/services/offline_cache";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
@@ -108,7 +109,9 @@ const ChatScreen = () => {
     }
   };
   const insets = useSafeAreaInsets();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messagesMap, seedMessages } = useAppData();
+  const cachedMessages = messagesMap[conversationId] ?? [];
+  const [messages, setMessages] = useState<Message[]>(cachedMessages);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -121,8 +124,8 @@ const ChatScreen = () => {
     try {
       const data = await getMessages(token, conversationId);
       setMessages(data);
-      // Persist for offline use
-      saveCache(cacheKeys.messages(conversationId), data);
+      // Persist for offline use and keep the shared cache in sync
+      seedMessages(conversationId, data);
     } catch (error: any) {
       console.log("Error fetching messages:", error);
       // Offline fallback: serve cached messages if we have them
@@ -140,7 +143,7 @@ const ChatScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, conversationId]);
+  }, [token, conversationId, seedMessages]);
 
   useEffect(() => {
     fetchMessages();
@@ -249,7 +252,7 @@ const ChatScreen = () => {
         const updated = prev.map((msg) =>
           msg._id === tempMessage._id ? sentMessage : msg
         );
-        saveCache(cacheKeys.messages(conversationId), updated);
+        seedMessages(conversationId, updated);
         return updated;
       });
     } catch (error: any) {
@@ -411,7 +414,7 @@ const ChatScreen = () => {
             {/* CONTENT */}
             <View style={styles.content}>
               {/* Messages */}
-              {isLoading ? (
+              {isLoading && messages.length === 0 ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color={colors.primary} />
                 </View>

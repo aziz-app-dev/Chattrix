@@ -1,6 +1,7 @@
 import MyTxt from "@/components/txt_conponents";
 import { colors } from "@/constants/theme";
 import { CallProps } from "@/constants/types";
+import { useAppData } from "@/context/app_data_context";
 import { useAuth } from "@/context/auth_context";
 import { useCall } from "@/context/call_context";
 import { getCallHistory } from "@/services/call_service";
@@ -21,7 +22,8 @@ import {
 const CallHistoryScreen = () => {
   const { token, user } = useAuth();
   const { initiateCall } = useCall();
-  const [calls, setCalls] = useState<CallProps[]>([]);
+  const { callHistory } = useAppData();
+  const [calls, setCalls] = useState<CallProps[]>(callHistory);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);

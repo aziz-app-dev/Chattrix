@@ -1,25 +1,41 @@
 import { colors } from "@/constants/theme";
+import { useAppData } from "@/context/app_data_context";
 import { useAuth } from "@/context/auth_context";
 import { Redirect } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
+const MIN_SPLASH_MS = 2000;
+
 /**
- * Splash gateway. This is the app's initial route (see unstable_settings in
- * app/_layout.tsx). While auth is being resolved we show the splash logo; once
- * resolved we redirect to the right place — so the Home screen never flashes.
- *
- *  - still loading  -> splash logo
- *  - signed in      -> Home (tabs)
- *  - not signed in  -> Auth / Get Started (welcome)
+ * Splash gateway. First page shown on app start. It:
+ *  - stays visible for a minimum time so it always appears on launch
+ *  - checks whether the user is logged in (auth token)
+ *  - when signed in, loads the cached conversations / groups / messages /
+ *    call history instantly and keeps refreshing them from the API in the
+ *    background, then redirects to Home.
  */
 const SplashScreen = () => {
   const { isLoading, isAuthenticated } = useAuth();
+  const { isInitialLoading } = useAppData();
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
-  if (!isLoading) {
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const readyToRedirect =
+    minTimeElapsed &&
+    !isLoading &&
+    (!isAuthenticated || !isInitialLoading);
+
+  if (readyToRedirect) {
     return (
-      <Redirect href={isAuthenticated ? "/(tabs)" : "/(auth)/welcome_screen"} />
+      <Redirect
+        href={isAuthenticated ? "/(tabs)" : "/(auth)/welcome_screen"}
+      />
     );
   }
 

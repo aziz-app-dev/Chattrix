@@ -31,4 +31,5 @@ export const loadCache = async <T>(key: string): Promise<T | null> => {
 export const cacheKeys = {
   conversations: (type: string) => `conversations:${type}`,
   messages: (conversationId: string) => `messages:${conversationId}`,
+  calls: () => "calls",
 };

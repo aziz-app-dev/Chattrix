@@ -10,6 +10,7 @@ import { AppAlertHost } from "@/components/custom_alert";
 import { ToastHost } from "@/components/toast";
 
 import { colors } from "@/constants/theme";
+import { AppDataProvider } from "@/context/app_data_context";
 import { AuthProvider } from "@/context/auth_context";
 import { CallProvider } from "@/context/call_context";
 import { NotificationProvider } from "@/context/notification_context";
@@ -36,8 +37,9 @@ export default function RootLayout() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <AuthProvider>
-        <NotificationProvider>
-          <SocketProvider>
+        <AppDataProvider>
+          <NotificationProvider>
+            <SocketProvider>
             <CallProvider>
               <ThemeProvider
                 value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -91,6 +93,7 @@ export default function RootLayout() {
             </CallProvider>
           </SocketProvider>
         </NotificationProvider>
+        </AppDataProvider>
       </AuthProvider>
     </SafeAreaView>
   );
