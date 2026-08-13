@@ -59,7 +59,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         ]}
       >
         {!isMe && isGroup && showAvatar && senderName && (
-          <MyTxt fontSize={12} color={colors.neutral900} fontWeight="600">
+          <MyTxt fontSize={12} color={colors.neutral300} fontWeight="600">
             {senderName}
           </MyTxt>
         )}
@@ -70,12 +70,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             resizeMode="cover"
           />
         ) : (
-          <MyTxt fontSize={15} color={colors.black}>
+          <MyTxt fontSize={15} color={colors.white}>
             {content}
           </MyTxt>
         )}
         <View style={styles.messageFooter}>
-          <MyTxt fontSize={10} color={colors.black}>
+          <MyTxt fontSize={10} color="rgba(255,255,255,0.65)">
             {formatTime(time)}
           </MyTxt>
           {isMe && status && (
@@ -88,7 +88,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   : "alert-circle-outline"
               }
               size={14}
-              color={status === "failed" ? colors.rose : colors.neutral400}
+              color={status === "failed" ? colors.rose : "rgba(255,255,255,0.65)"}
               style={{ marginLeft: 4 }}
             />
           )}
@@ -119,18 +119,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   messageBubble: {
-    maxWidth: "75%",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 14,
+    maxWidth: "80%",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   myBubble: {
     backgroundColor: colors.myBubble,
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 3,
   },
   otherBubble: {
     backgroundColor:  colors.otherBubble,
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 3,
   },
   bubbleWithoutAvatar: {
     marginLeft: 36,

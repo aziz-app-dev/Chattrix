@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { useAuth } from "./auth_context";
 
 const SocketContext = createContext<SocketContextProps>({
@@ -39,46 +40,50 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
+  // Attach all listeners to the current socket
+  const attachSocketListeners = useCallback((socket: ReturnType<typeof socketService.connect>) => {
+    socket.on("connect", () => {
+      console.log("🔌 Socket: Connected successfully! Socket ID:", socket.id);
+      setIsConnected(true);
+      // Fetch online users on connect
+      socketService.getOnlineUsers((users) => {
+        console.log("🔌 Socket: Online users fetched:", users);
+        setOnlineUsers(users);
+      });
+    });
+
+    socket.on("connect_error", (error) => {
+      console.log("🔌 Socket: Connection error:", error.message);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("🔌 Socket: Disconnected, reason:", reason);
+      setIsConnected(false);
+    });
+
+    // Track online users
+    socketService.onUserOnline(({ userId }) => {
+      console.log("🔌 Socket: User came online:", userId);
+      setOnlineUsers((prev) => {
+        if (!prev.includes(userId)) {
+          return [...prev, userId];
+        }
+        return prev;
+      });
+    });
+
+    socketService.onUserOffline(({ userId }) => {
+      console.log("🔌 Socket: User went offline:", userId);
+      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+    });
+  }, []);
+
   // Connect when token is available
   useEffect(() => {
     if (token) {
       console.log("🔌 Socket: Token available, attempting to connect...");
       const socket = socketService.connect(token);
-
-      socket.on("connect", () => {
-        console.log("🔌 Socket: Connected successfully! Socket ID:", socket.id);
-        setIsConnected(true);
-        // Fetch online users on connect
-        socketService.getOnlineUsers((users) => {
-          console.log("🔌 Socket: Online users fetched:", users);
-          setOnlineUsers(users);
-        });
-      });
-
-      socket.on("connect_error", (error) => {
-        console.log("🔌 Socket: Connection error:", error.message);
-      });
-
-      socket.on("disconnect", (reason) => {
-        console.log("🔌 Socket: Disconnected, reason:", reason);
-        setIsConnected(false);
-      });
-
-      // Track online users
-      socketService.onUserOnline(({ userId }) => {
-        console.log("🔌 Socket: User came online:", userId);
-        setOnlineUsers((prev) => {
-          if (!prev.includes(userId)) {
-            return [...prev, userId];
-          }
-          return prev;
-        });
-      });
-
-      socketService.onUserOffline(({ userId }) => {
-        console.log("🔌 Socket: User went offline:", userId);
-        setOnlineUsers((prev) => prev.filter((id) => id !== userId));
-      });
+      attachSocketListeners(socket);
 
       return () => {
         console.log("🔌 Socket: Cleaning up connection...");
@@ -89,7 +94,29 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     } else {
       console.log("🔌 Socket: No token available, not connecting");
     }
-  }, [token]);
+  }, [token, attachSocketListeners]);
+
+  // Keep presence accurate: when the app goes to the background, disconnect the
+  // socket (the server then broadcasts "offline"); reconnect on foreground.
+  // Without this, Android keeps the socket alive in the background and users
+  // appear online while they are actually not using the app.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") {
+        if (token && !socketService.isConnected()) {
+          console.log("🔌 Socket: App active, reconnecting...");
+          const socket = socketService.connect(token);
+          attachSocketListeners(socket);
+        }
+      } else {
+        console.log("🔌 Socket: App backgrounded, disconnecting...");
+        socketService.disconnect();
+        setIsConnected(false);
+        setOnlineUsers([]);
+      }
+    });
+    return () => subscription.remove();
+  }, [token, attachSocketListeners]);
 
   const connect = useCallback(() => {
     if (token) {

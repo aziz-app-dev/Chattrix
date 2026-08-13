@@ -15,8 +15,8 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    pingTimeout: 60000,
-    pingInterval: 25000,
+    pingTimeout: 20000,
+    pingInterval: 15000,
   });
 
   // Apply authentication middleware

@@ -52,6 +52,7 @@ const ChatScreen = () => {
   const { token, user } = useAuth();
   const { initiateCall } = useCall();
   const {
+    onlineUsers,
     onMessage,
     offMessage,
     onDirectMessage,
@@ -72,6 +73,24 @@ const ChatScreen = () => {
     }
     return [];
   };
+
+  // Other participant's id (for direct chats) to check real presence
+  const otherParticipantId =
+    type !== "direct" || !participantIds
+      ? null
+      : (() => {
+          try {
+            const ids = JSON.parse(participantIds);
+            return ids.find((id: string) => id !== user?.id) ?? null;
+          } catch {
+            return (
+              participantIds.split(",").find((id) => id !== user?.id) ?? null
+            );
+          }
+        })();
+  const isOtherOnline = otherParticipantId
+    ? onlineUsers.includes(otherParticipantId)
+    : false;
 
   const handleAudioCall = () => {
     const ids = getParticipantIdsForCall();
@@ -341,9 +360,20 @@ const ChatScreen = () => {
                   {name}
                 </MyTxt>
                 <View style={styles.onlineStatus}>
-                  <View style={styles.onlineDot} />
+                  <View
+                    style={[
+                      styles.onlineDot,
+                      type !== "group" &&
+                        !isOtherOnline &&
+                        styles.offlineDot,
+                    ]}
+                  />
                   <MyTxt fontSize={11} color={colors.neutral300}>
-                    {type === "group" ? "Group Chat" : "Online"}
+                    {type === "group"
+                      ? "Group Chat"
+                      : isOtherOnline
+                      ? "Online"
+                      : "Offline"}
                   </MyTxt>
                 </View>
               </View>
@@ -497,6 +527,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.green,
     marginRight: 6,
+  },
+  offlineDot: {
+    backgroundColor: colors.neutral400,
   },
   headerBtn: {
     padding: 10,
