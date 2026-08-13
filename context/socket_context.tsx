@@ -13,6 +13,7 @@ import { useAuth } from "./auth_context";
 
 const SocketContext = createContext<SocketContextProps>({
   isConnected: false,
+  isOffline: false,
   onlineUsers: [],
   connect: () => {},
   disconnect: () => {},
@@ -38,6 +39,7 @@ const SocketContext = createContext<SocketContextProps>({
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { token } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   // Attach all listeners to the current socket
@@ -45,6 +47,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on("connect", () => {
       console.log("🔌 Socket: Connected successfully! Socket ID:", socket.id);
       setIsConnected(true);
+      setIsOffline(false);
       // Fetch online users on connect
       socketService.getOnlineUsers((users) => {
         console.log("🔌 Socket: Online users fetched:", users);
@@ -54,6 +57,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     socket.on("connect_error", (error) => {
       console.log("🔌 Socket: Connection error:", error.message);
+      // No network / server unreachable -> surface the offline state
+      setIsOffline(true);
     });
 
     socket.on("disconnect", (reason) => {
@@ -89,6 +94,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         console.log("🔌 Socket: Cleaning up connection...");
         socketService.disconnect();
         setIsConnected(false);
+        setIsOffline(false);
         setOnlineUsers([]);
       };
     } else {
@@ -127,6 +133,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const disconnect = useCallback(() => {
     socketService.disconnect();
     setIsConnected(false);
+    setIsOffline(false);
     setOnlineUsers([]);
   }, []);
 
@@ -223,6 +230,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     <SocketContext.Provider
       value={{
         isConnected,
+        isOffline,
         onlineUsers,
         connect,
         disconnect,

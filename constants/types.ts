@@ -192,6 +192,7 @@ export type SocketNewMessageData = {
 
 export type SocketContextProps = {
   isConnected: boolean;
+  isOffline: boolean;
   onlineUsers: string[];
   connect: () => void;
   disconnect: () => void;
