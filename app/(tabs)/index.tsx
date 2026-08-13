@@ -4,6 +4,7 @@ import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth_context";
 import { useSocket } from "@/context/socket_context";
 import { getConversations } from "@/services/conversation_service";
+import { cacheKeys, saveCache, loadCache } from "@/services/offline_cache";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -53,6 +54,9 @@ export default function HomeScreen() {
       cacheRef.current[cacheKey] = data;
       cacheRef.current[loadedKey] = true;
 
+      // Persist for offline use
+      saveCache(cacheKeys.conversations(type), data);
+
       // Update UI if still on the same tab
       const currentType = activeTab === "messages" ? "direct" : "group";
       if (currentType === type) {
@@ -60,10 +64,21 @@ export default function HomeScreen() {
       }
     } catch (error: any) {
       console.log("Error fetching conversations:", error);
-      Toast.error(
-        error?.message || "Failed to fetch conversations",
-        "Load failed"
-      );
+      // Offline fallback: serve cached data if we have it
+      const cached = await loadCache<any[]>(cacheKeys.conversations(type));
+      if (cached && cached.length > 0) {
+        cacheRef.current[cacheKey] = cached;
+        cacheRef.current[loadedKey] = true;
+        const currentType = activeTab === "messages" ? "direct" : "group";
+        if (currentType === type) {
+          setConversations(cached);
+        }
+      } else {
+        Toast.error(
+          error?.message || "Failed to fetch conversations",
+          "Load failed"
+        );
+      }
     } finally {
       setIsInitialLoading(false);
       setIsRefreshing(false);

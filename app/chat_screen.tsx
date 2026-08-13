@@ -8,6 +8,7 @@ import { useCall } from "@/context/call_context";
 import { useSocket } from "@/context/socket_context";
 import { uploadImageToCloudinary } from "@/services/cloundinary_services";
 import { getMessages, sendMessage } from "@/services/conversation_service";
+import { cacheKeys, saveCache, loadCache } from "@/services/offline_cache";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
@@ -120,9 +121,22 @@ const ChatScreen = () => {
     try {
       const data = await getMessages(token, conversationId);
       setMessages(data);
+      // Persist for offline use
+      saveCache(cacheKeys.messages(conversationId), data);
     } catch (error: any) {
       console.log("Error fetching messages:", error);
-      Toast.error(error?.message || "Failed to load messages", "Load failed");
+      // Offline fallback: serve cached messages if we have them
+      const cached = await loadCache<Message[]>(
+        cacheKeys.messages(conversationId)
+      );
+      if (cached && cached.length > 0) {
+        setMessages(cached);
+      } else {
+        Toast.error(
+          error?.message || "Failed to load messages",
+          "Load failed"
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -230,10 +244,14 @@ const ChatScreen = () => {
 
     try {
       const sentMessage = await sendMessage(token, conversationId, messageText);
-      // Replace temp message with real one
-      setMessages((prev) =>
-        prev.map((msg) => (msg._id === tempMessage._id ? sentMessage : msg))
-      );
+      // Replace temp message with real one and refresh the offline cache
+      setMessages((prev) => {
+        const updated = prev.map((msg) =>
+          msg._id === tempMessage._id ? sentMessage : msg
+        );
+        saveCache(cacheKeys.messages(conversationId), updated);
+        return updated;
+      });
     } catch (error: any) {
       console.log("Error sending message:", error);
       Toast.error(error?.message || "Failed to send message", "Send failed");
