@@ -1,5 +1,4 @@
 import { colors } from "@/constants/theme";
-import { useAppData } from "@/context/app_data_context";
 import { useAuth } from "@/context/auth_context";
 import { Redirect } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -18,7 +17,6 @@ const MIN_SPLASH_MS = 2000;
  */
 const SplashScreen = () => {
   const { isLoading, isAuthenticated } = useAuth();
-  const { isInitialLoading } = useAppData();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
@@ -26,10 +24,7 @@ const SplashScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const readyToRedirect =
-    minTimeElapsed &&
-    !isLoading &&
-    (!isAuthenticated || !isInitialLoading);
+  const readyToRedirect = minTimeElapsed && !isLoading;
 
   if (readyToRedirect) {
     return (
