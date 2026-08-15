@@ -1,19 +1,18 @@
-import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth_context";
 import { Redirect } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+
+import SplashView from "@/components/splash_view";
 
 const MIN_SPLASH_MS = 2000;
 
 /**
- * Splash gateway. First page shown on app start. It:
- *  - stays visible for a minimum time so it always appears on launch
+ * Splash gateway route. Kept for deep links / direct navigation; the root
+ * layout gate already shows the splash on every app start, so this route is
+ * normally never reached. It:
+ *  - stays visible for a minimum time
  *  - checks whether the user is logged in (auth token)
- *  - when signed in, loads the cached conversations / groups / messages /
- *    call history instantly and keeps refreshing them from the API in the
- *    background, then redirects to Home.
+ *  - redirects to Home or Get Started.
  */
 const SplashScreen = () => {
   const { isLoading, isAuthenticated } = useAuth();
@@ -34,28 +33,7 @@ const SplashScreen = () => {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <Animated.Image
-        source={require("../assets/images/chat.png")}
-        style={styles.img}
-        entering={FadeInDown.duration(700).springify()}
-      />
-    </View>
-  );
+  return <SplashView />;
 };
 
 export default SplashScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.neutral900,
-  },
-  img: {
-    height: "23%",
-    aspectRatio: 1,
-  },
-});
